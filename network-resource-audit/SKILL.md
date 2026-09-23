@@ -115,7 +115,7 @@ For each GPU, note the best NIC (PIX/NODE) — NCCL should pick it automatically
 
 ## Final deliverable — network resource map
 
-Always end with two deliverables.
+The final report contains **only two things** — the device summary table and the network resource map (plus the bottleneck statement, rule 4). Do **not** paste command outputs or per-step execution details into the report; step findings only show up as rows/columns in the table and labels on the map. Per-step OK/finding/N/A status (rule 1) is reported inline while auditing, in one line per step.
 
 **1. Device summary table** — one row per NIC / RDMA device / GPU interconnect, listing supported communication features (RDMA, RoCE, GPUDirect, NVLink/NVSwitch) and theoretical speed:
 
@@ -152,7 +152,7 @@ NIC              100 Gb/s = 12.5 GB/s
 
 ## Reporting rules
 
-1. **Never skip silently** — mark each step OK / finding / N/A(OS).
+1. **Never skip silently** — during the audit report each step OK / finding / N/A(OS) in one line; the final table+map carries the substance.
 2. **Flag mismatches**: negotiated < capable speed; PCIe LnkSta < LnkCap; GPU↔NIC = SYS when a NODE/PIX path exists.
 3. **One number per edge** in the map and one row per device in the table, with units (GB/s vs Gb/s — convert explicitly, 8 Gb/s ≈ 1 GB/s). Every NIC/GPU-interconnect from steps 2 and 8 must appear in the table — no omissions; unsupported features are marked ✗/N/A, not left blank.
-4. End with a short bottleneck statement: "the slowest edge on the GPU→remote-GPU path is X at Y GB/s".
+4. End with a one-line bottleneck statement after the map: "the slowest edge on the GPU→remote-GPU path is X at Y GB/s".
