@@ -54,7 +54,7 @@ CANDIDATES=(
   "Gemini CLI|$HOME/.gemini/skills"
   "Cursor|$HOME/.cursor/skills"
   "GitHub Copilot CLI|$HOME/.copilot/skills"
-  "OpenCode|$HOME/.config/opencode/skill"
+  "OpenCode|$HOME/.config/opencode/skills"
   "Amp|$HOME/.config/amp/skills"
   "Pi|$HOME/.pi/agent/skills"
   "Windsurf|$HOME/.codeium/windsurf/skills"
