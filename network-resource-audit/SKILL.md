@@ -115,7 +115,19 @@ For each GPU, note the best NIC (PIX/NODE) — NCCL should pick it automatically
 
 ## Final deliverable — network resource map
 
-Always end by drawing the map: CPUs/NUMA at top, PCIe switches, GPUs and NICs below, network fabric, remote side. Label **every edge with theoretical bandwidth**:
+Always end with two deliverables.
+
+**1. Device summary table** — one row per NIC / RDMA device / GPU interconnect, listing supported communication features (RDMA, RoCE, GPUDirect, NVLink/NVSwitch) and theoretical speed:
+
+| Device | Interface | Model | Link speed (negotiated / capable) | PCIe (LnkCap → LnkSta) | NUMA | Features |
+|--------|-----------|-------|-----------------------------------|------------------------|------|----------|
+| NIC0   | eth0      | Mellanox CX-6 Dx | 100G / 100G  | Gen4 x16 → Gen4 x16 ✓ | 0 | RDMA: RoCEv2, GPUDirect ✓ |
+| NIC1   | eth1      | Intel E810      | 25G / 100G ⚠ | Gen4 x16 → Gen3 x8 ⚠  | 1 | RDMA: none, GPUDirect ✗ |
+| GPU IPA| —         | NVLink gen4     | 900 GB/s total | —                    | — | NVLink/NVSwitch ✓ |
+
+State explicitly when a feature is unsupported (e.g. "RDMA ✗") — absence of a column entry hides findings.
+
+**2. Network resource map** — CPUs/NUMA at top, PCIe switches, GPUs and NICs below, network fabric, remote side. Label **every edge with theoretical bandwidth**:
 
 ```
                     ┌──────── CPU 0 ────────┐
@@ -142,5 +154,5 @@ NIC              100 Gb/s = 12.5 GB/s
 
 1. **Never skip silently** — mark each step OK / finding / N/A(OS).
 2. **Flag mismatches**: negotiated < capable speed; PCIe LnkSta < LnkCap; GPU↔NIC = SYS when a NODE/PIX path exists.
-3. **One number per edge** in the map, with units (GB/s vs Gb/s — convert explicitly, 8 Gb/s ≈ 1 GB/s).
+3. **One number per edge** in the map and one row per device in the table, with units (GB/s vs Gb/s — convert explicitly, 8 Gb/s ≈ 1 GB/s). Every NIC/GPU-interconnect from steps 2 and 8 must appear in the table — no omissions; unsupported features are marked ✗/N/A, not left blank.
 4. End with a short bottleneck statement: "the slowest edge on the GPU→remote-GPU path is X at Y GB/s".
