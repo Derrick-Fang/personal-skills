@@ -1,11 +1,11 @@
 ---
 name: network-resource-audit
-description: Audit a machine's real network resources — interfaces, NIC hardware, link speed, bonding, RDMA, PCIe topology, NUMA affinity, GPU-NIC topology, and measured bandwidth (TCP / RDMA / NCCL) — then draw a labeled network resource map with theoretical and measured bandwidth on every edge. Works on Linux and macOS. Use when the user gets a new server, wants to check / audit / 检查 network resources / 网络资源 / 网卡 / RDMA / NCCL topology of a machine, wants to diagnose whether network bandwidth is a bottleneck, or asks to draw a server network topology / bandwidth map (服务器网络资源图).
+description: Audit a machine's real network resources — interfaces, NIC hardware, link speed, bonding, RDMA, PCIe topology, NUMA affinity, and GPU-NIC topology — then draw a labeled network resource map with theoretical bandwidth on every edge. Works on Linux and macOS. Use when the user gets a new server, wants to check / audit / 检查 network resources / 网络资源 / 网卡 / RDMA / NCCL topology of a machine, wants to diagnose whether network bandwidth is a bottleneck, or asks to draw a server network topology / bandwidth map (服务器网络资源图).
 ---
 
 # Network Resource Audit
 
-Fixed checklist for any new machine. Run every step, record results, and finish by drawing a **network resource map** with both *theoretical* and *measured* bandwidth on each edge.
+Fixed checklist for any new machine. Run every step, record results, and finish by drawing a **network resource map** with *theoretical* bandwidth on each edge.
 
 Commands are given for **Linux** (primary) and **macOS** (equivalent, where available). If a capability doesn't exist on the OS (e.g. RDMA on macOS), state "N/A" explicitly rather than skipping silently.
 
@@ -113,40 +113,9 @@ nvidia-smi -q | grep -E 'Gpu|Product|PCI'
 
 For each GPU, note the best NIC (PIX/NODE) — NCCL should pick it automatically, but verify with `NCCL_DEBUG=INFO` logs.
 
-## Step 9 — TCP measured bandwidth
-
-```bash
-# Needs a peer machine with a similar NIC.
-# Server side:
-iperf3 -s
-# Client side:
-iperf3 -c <server-ip> -t 10
-iperf3 -c <server-ip> -P 8 -t 10     # parallel streams, often needed to saturate ≥40G
-iperf3 -c <server-ip> -R             # reverse direction — test both ways
-# macOS: iperf3 via brew; Linux: package manager or static build
-```
-
-Record both directions, single-stream and multi-stream. Single-stream ceiling often reveals IRQ/RSS tuning issues (check `ethtool -l`, `ethtool -k`, IRQ affinity vs step 7 NUMA).
-
-## Step 10 — RDMA / NCCL measured bandwidth
-
-```bash
-# Linux only.
-# RDMA point-to-point:
-ib_write_bw -d <rdma-dev>            # server
-ib_write_bw -d <rdma-dev> <server-ip>   # client
-# GPU-direct RDMA if supported:
-ib_write_bw -d <rdma-dev> --use_cuda=<gpu-id>
-
-# NCCL (multi-node all_reduce):
-# build nccl-tests, then e.g. 2 nodes × 8 GPUs:
-mpirun -np 16 -H node1:8,node2:8 ./build/all_reduce_perf -b 8 -e 1G -f 2 -g 1
-# watch "busbw" column — that's the number that matters
-```
-
 ## Final deliverable — network resource map
 
-Always end by drawing the map: CPUs/NUMA at top, PCIe switches, GPUs and NICs below, network fabric, remote side. Label **every edge with theoretical AND measured bandwidth**:
+Always end by drawing the map: CPUs/NUMA at top, PCIe switches, GPUs and NICs below, network fabric, remote side. Label **every edge with theoretical bandwidth**:
 
 ```
                     ┌──────── CPU 0 ────────┐
@@ -165,15 +134,13 @@ Always end by drawing the map: CPUs/NUMA at top, PCIe switches, GPUs and NICs be
                        │
                   Remote GPU
 
-PCIe Gen4 x16    31.5 GB/s   (measured x16 16GT/s ✓)
+PCIe Gen4 x16    31.5 GB/s   (LnkCap x16 16GT/s, LnkSta matches ✓)
 NIC              100 Gb/s = 12.5 GB/s
-Network measured 11.2 GB/s   (iperf3 -P8)
-NCCL busbw       10.4 GB/s   (all_reduce 1G)
 ```
 
 ## Reporting rules
 
 1. **Never skip silently** — mark each step OK / finding / N/A(OS).
-2. **Flag mismatches**: negotiated < capable speed; PCIe LnkSta < LnkCap; measured < ~85% of theoretical; GPU↔NIC = SYS when a NODE/PIX path exists.
+2. **Flag mismatches**: negotiated < capable speed; PCIe LnkSta < LnkCap; GPU↔NIC = SYS when a NODE/PIX path exists.
 3. **One number per edge** in the map, with units (GB/s vs Gb/s — convert explicitly, 8 Gb/s ≈ 1 GB/s).
 4. End with a short bottleneck statement: "the slowest edge on the GPU→remote-GPU path is X at Y GB/s".

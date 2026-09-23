@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Network resource audit — auto-collect steps 1-8 (steps 9-10 need a peer machine).
+# Network resource audit — auto-collect steps 1-8.
 # Usage: ./check-network.sh [iface]   # iface defaults to the primary default-route interface
 set -u
 say() { printf '\n========== %s ==========\n' "$*"; }
@@ -36,12 +36,6 @@ fi
 
 cat <<'EOF'
 
-========== 9-10. Measured bandwidth (manual, needs a peer) ==========
-  peer:    iperf3 -s
-  here:    iperf3 -c <peer> -P 8 -t 10   ;   iperf3 -c <peer> -R -P 8
-  RDMA:    ib_write_bw -d <dev>          (server) / ib_write_bw -d <dev> <peer> (client)
-  NCCL:    mpirun -np <N> ... all_reduce_perf -b 8 -e 1G -f 2 -g 1   # watch busbw
-
 Now draw the resource map: CPU/NUMA -> PCIe switch -> GPU/NIC -> fabric -> remote,
-and label every edge with theoretical AND measured GB/s.
+and label every edge with theoretical GB/s.
 EOF
