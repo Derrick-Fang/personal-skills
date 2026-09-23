@@ -46,9 +46,20 @@ echo
 
 # -- 2. Detect agent harnesses on this machine -------------------------------
 # Entry format: "name|skill directory"
+# Note: harnesses whose directory does not exist are skipped, so it is
+# safe (and cheap) to list every common agent here.
 CANDIDATES=(
   "Claude Code|$HOME/.claude/skills"
   "Codex|$HOME/.codex/skills"
+  "Gemini CLI|$HOME/.gemini/skills"
+  "Cursor|$HOME/.cursor/skills"
+  "GitHub Copilot CLI|$HOME/.copilot/skills"
+  "OpenCode|$HOME/.config/opencode/skill"
+  "Amp|$HOME/.config/amp/skills"
+  "Pi|$HOME/.pi/agent/skills"
+  "Windsurf|$HOME/.codeium/windsurf/skills"
+  "Cline|$HOME/.cline/skills"
+  "Roo Code|$HOME/.roo/skills"
 )
 
 DETECTED=()
